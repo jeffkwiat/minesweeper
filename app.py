@@ -12,12 +12,13 @@ class Minesweeper(object):
         self.height = height
         self.number_of_mines = number_of_mines
         self.board = self.generate_board()
+        self.flag_cells()
 
     def get_coordinates(self):
         """ Get coordinates for this board. """
         coordinates = []
-        for x in range(self.width):
-            for y in range(self.height):
+        for x in range(self.height):
+            for y in range(self.width):
                coordinates.append((x, y))
         return coordinates
 
@@ -25,17 +26,12 @@ class Minesweeper(object):
         """ Build out the initial board. """
 
         # Generate the initial board with 0s.
-        board = [['0' for x in range(self.width)] for y in range(self.height)]
-        coordinates = self.get_coordinates()
-        # Set up the mines and surrounding counts.
-        mines = random.sample(coordinates, self.number_of_mines)
-        for x, y in mines:
-            board[y][x] = '*'
+        board = [[0 for x in range(self.width)] for y in range(self.height)]
 
-        # Setup counts for all surrounding cells.
-        for coordinate in coordinates:
-            for cell in self.get_surrounding_cells(coordinate):
-                board[cell[0], cell[1]] = int(board[cell[0], cell[1]]) + 1
+        # Set up the mines and surrounding counts.
+        mines = random.sample(self.get_coordinates(), self.number_of_mines)
+        for x, y in mines:
+            board[x][y] = '*'
 
         return board
 
@@ -48,7 +44,7 @@ class Minesweeper(object):
         """ Print the board to the console. """
         result = ""
         for row in self.board:
-            result += ''.join(row) + '\n'
+            result += ''.join([str(x) for x in row]) + '\n'
         return result
 
     def count_mines(self):
@@ -60,6 +56,14 @@ class Minesweeper(object):
                     count += 1
         return count
 
+    def _is_on_board(self, coordinate):
+        """ Return True if the coordinate is on the board.  Else, False. """
+        x, y = coordinate
+
+        if (x >= 0 and x < len(self.board)) and (y >= 0 and y < len(self.board)):
+            return True
+        return False
+
     def get_surrounding_cells(self, coord):
         """ Return the surrounding (x, y) coords. """
         surrounding = []
@@ -69,8 +73,22 @@ class Minesweeper(object):
                 if (x, y) == coord:
                     continue
 
-                # If the surrounding coord is on the board, add it.
-                if (0 <= x <= len(self.board)) and \
-                    (0 <= y <= len(self.board[x])):
-                    surrounding.append((x, y))
+                try:
+                    # If the surrounding coord is on the board, add it.
+                    if self._is_on_board((x, y)):
+                        surrounding.append((x, y))
+                except:
+                    print('trying to access: %s, %s' % (x, y))
+                    print(self)
+
         return surrounding
+
+    def flag_cells(self):
+        """ Setup counts for all surrounding cells. """
+        for coordinate in self.get_coordinates():
+
+            for cell in self.get_surrounding_cells(coordinate):
+                if self.board[cell[0]][cell[1]] == '*':
+                    continue
+
+                self.board[cell[0]][cell[1]] += 1
